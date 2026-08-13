@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Council</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --stone:#070b12;          /* deep midnight, the temple at night */
+    --panel:#0d141f;
+    --panel-edge:#1c2a3a;
+    --ember:#c9973f;          /* candle gold */
+    --ember-dim:#8a6a2e;
+    --parchment:#e8e4d5;
+    --ash:#7e8a91;
+    --saber:#5fd98a;          /* jedi green */
+    --saber-deep:#2a4d3a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:var(--stone);
+    color:var(--parchment);
+    font-family:'Cormorant Garamond',serif;
+    font-size:19px;
+    line-height:1.5;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  #rain-canvas{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    opacity:.55;
+  }
+  /* soft vignette so the rain recedes behind the chamber */
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 40%, transparent 30%, rgba(7,11,18,.75) 100%);
+  }
+  #gate,#room{position:relative;z-index:2}
+
+  /* ---------- gate (off by default — see REQUIRE_PASSWORD) ---------- */
+  #gate{
+    min-height:100dvh;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2.2rem;
+    padding:2rem;
+    text-align:center;
+    width:100%;
+  }
+  #gate .sigil{
+    font-size:2rem;
+    color:var(--ember);
+    letter-spacing:.5em;
+    text-indent:.5em;
+    opacity:.85;
+  }
+  #gate h1{
+    font-family:'Cinzel',serif;
+    font-weight:600;
+    font-size:clamp(1.6rem,5vw,2.4rem);
+    letter-spacing:.28em;
+    text-indent:.28em;
+  }
+  #gate p{color:var(--ash);font-style:italic;max-width:34ch}
+  #gate form{display:flex;flex-direction:column;gap:1rem;align-items:center}
+  #gate input{
+    background:rgba(7,11,18,.6);
+    border:none;
+    border-bottom:1px solid var(--panel-edge);
+    color:var(--parchment);
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.3rem;
+    text-align:center;
+    letter-spacing:.15em;
+    padding:.5rem 1rem;
+    width:min(320px,80vw);
+    outline:none;
+    transition:border-color .4s;
+  }
+  #gate input:focus{border-bottom-color:var(--ember)}
+  #gate button{
+    background:rgba(7,11,18,.6);
+    border:1px solid var(--ember-dim);
+    color:var(--ember);
+    font-family:'Cinzel',serif;
+    font-size:.85rem;
+    letter-spacing:.3em;
+    text-indent:.3em;
+    padding:.8rem 2rem;
+    cursor:pointer;
+    transition:background .4s,color .4s;
+  }
+  #gate button:hover,#gate button:focus-visible{background:var(--ember);color:var(--stone);outline:none}
+  #gate .wrong{color:#a0522d;font-style:italic;min-height:1.5em}
+
+  /* ---------- room ---------- */
+  #room{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    width:min(660px,100%);
+    min-height:100dvh;
+    padding:2.5rem 1rem 1rem;
+  }
+  .arch{
+    position:relative;
+    width:min(320px,75vw);
+    aspect-ratio:3/4;
+  }
+  .arch::before{
+    content:"";
+    position:absolute;
+    inset:-15%;
+    background:radial-gradient(ellipse 55% 55% at 50% 45%, rgba(95,217,138,.1), rgba(80,140,220,.06) 55%, transparent 75%);
+    animation:breathe 9s ease-in-out infinite;
+  }
+  @keyframes breathe{
+    0%,100%{opacity:.7}
+    50%{opacity:1}
+  }
+  @media (prefers-reduced-motion:reduce){.arch::before{animation:none}}
+  .arch img{
+    position:relative;
+    width:100%;height:100%;
+    object-fit:cover;
+    display:block;
+    filter:sepia(.12) contrast(1.02);
+    -webkit-mask-image:radial-gradient(ellipse 68% 70% at 50% 45%, black 40%, transparent 97%);
+    mask-image:radial-gradient(ellipse 68% 70% at 50% 45%, black 40%, transparent 97%);
+  }
+  .nameplate{margin-top:1.4rem;text-align:center}
+  .nameplate h1{
+    font-family:'Cinzel',serif;
+    font-weight:700;
+    font-size:1.5rem;
+    letter-spacing:.35em;
+    text-indent:.35em;
+    text-shadow:0 0 30px rgba(95,217,138,.25);
+  }
+  .nameplate span{
+    display:block;
+    margin-top:.3rem;
+    font-size:.95rem;
+    font-style:italic;
+    color:var(--ash);
+    letter-spacing:.08em;
+  }
+  .rule{
+    width:120px;height:1px;margin:1.6rem auto;
+    background:linear-gradient(to right,transparent,var(--ember-dim),transparent);
+  }
+
+  /* ---------- chat ---------- */
+  #scroll{
+    width:100%;
+    flex:1;
+    overflow-y:auto;
+    padding:.7rem .7rem 1rem;
+    scrollbar-width:thin;
+    scrollbar-color:var(--panel-edge) transparent;
+    min-height:200px;
+    max-height:52dvh;
+    background:rgba(7,11,18,.55);
+    border:1px solid rgba(28,42,58,.6);
+    border-radius:4px;
+    backdrop-filter:blur(2px);
+  }
+  .msg{margin-bottom:1.1rem;animation:ink .6s ease}
+  @keyframes ink{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.msg{animation:none}}
+  .msg .who{
+    font-family:'Cinzel',serif;
+    font-size:.72rem;
+    letter-spacing:.22em;
+    color:var(--ash);
+    text-transform:uppercase;
+  }
+  .msg.quigon .who{color:var(--saber)}
+  .msg .text{margin-top:.15rem;white-space:pre-wrap;overflow-wrap:break-word}
+  .msg.quigon .text{
+    border-left:2px solid var(--saber-deep);
+    padding-left:.9rem;
+    font-size:1.06em;
+  }
+  .msg.pondering .text{color:var(--ash);font-style:italic}
+
+  /* ---------- composer ---------- */
+  #composer{
+    width:100%;
+    display:flex;
+    gap:.6rem;
+    padding:.9rem 0 1.2rem;
+    margin-top:.8rem;
+    border-top:1px solid var(--panel-edge);
+  }
+  #composer input,#composer textarea{
+    background:rgba(13,20,31,.85);
+    border:1px solid var(--panel-edge);
+    color:var(--parchment);
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.05rem;
+    padding:.65rem .9rem;
+    border-radius:3px;
+    outline:none;
+    transition:border-color .3s;
+  }
+  #composer input:focus,#composer textarea:focus{border-color:var(--saber-deep)}
+  #name{width:120px;flex-shrink:0}
+  #message{flex:1;resize:none;height:48px;line-height:1.3}
+  #send{
+    background:rgba(13,20,31,.85);
+    border:1px solid var(--ember-dim);
+    color:var(--ember);
+    font-family:'Cinzel',serif;
+    font-size:.75rem;
+    letter-spacing:.2em;
+    padding:0 1.2rem;
+    cursor:pointer;
+    border-radius:3px;
+    transition:background .3s,color .3s;
+  }
+  #send:hover,#send:focus-visible{background:var(--ember);color:var(--stone);outline:none}
+  #send:disabled{opacity:.4;cursor:default}
+  #send:disabled:hover{background:rgba(13,20,31,.85);color:var(--ember)}
+
+  footer{
+    font-size:.8rem;
+    color:var(--ash);
+    letter-spacing:.15em;
+    font-style:italic;
+    padding-bottom:1rem;
+  }
+  @media (max-width:480px){
+    #composer{flex-wrap:wrap}
+    #name{width:100%}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="rain-canvas" aria-hidden="true"></canvas>
+
+<!-- ══════════ THE GATE (enabled via REQUIRE_PASSWORD) ══════════ -->
+<section id="gate">
+  <div class="sigil">✦ ✦ ✦</div>
+  <h1>THE COUNCIL</h1>
+  <p>Beyond this door sits one who has pondered long. Speak the word, and enter.</p>
+  <form id="gateForm">
+    <input id="password" type="password" inputmode="numeric" placeholder="the word" autocomplete="off" aria-label="Password">
+    <button type="submit">ENTER THE COUNCIL</button>
+    <div class="wrong" id="wrong" aria-live="polite"></div>
+  </form>
+</section>
+
+<!-- ══════════ THE ROOM ══════════ -->
+<section id="room">
+  <div class="arch"><img src="quigon.png" alt="Qui Gon, keeper of the Council"></div>
+  <div class="nameplate">
+    <h1>QUI GON</h1>
+    <span>Keeper of the Council</span>
+  </div>
+  <div class="rule"></div>
+
+  <div id="scroll" aria-live="polite"></div>
+
+  <form id="composer">
+    <input id="name" type="text" placeholder="Your name" maxlength="24" aria-label="Your name">
+    <textarea id="message" placeholder="Speak to the Council…" maxlength="1000" aria-label="Message"></textarea>
+    <button id="send" type="submit">SEND</button>
+  </form>
+  <footer>all who have entered may witness these words</footer>
+</section>
+
+<!-- ══════════ ANCIENT RAIN ══════════ -->
+<script>
+(function(){
+  var rc = document.getElementById('rain-canvas');
+  var rctx = rc.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var fontSize = 16;
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*+-=[]{}|;:<>?/!～！￥（）【】';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // lettering in bright jedi blues, white, and grey — green survives as a soft shadow glow
+  var BLUES = ['120,180,255', '90,150,235', '150,205,255', '170,180,195'];  // last one greyish
+  var WHITE = '235,242,248';
+  var GREEN_SHADOW = 'rgba(95,217,138,0.55)';   // the jedi green, breathing behind the letters
+
+  var columns = 0, drops = [];
+
+  function setup(){
+    rc.width  = window.innerWidth  * dpr;
+    rc.height = window.innerHeight * dpr;
+    rc.style.width  = window.innerWidth  + 'px';
+    rc.style.height = window.innerHeight + 'px';
+    rctx.setTransform(1,0,0,1,0,0);
+    rctx.scale(dpr, dpr);
+    rctx.fillStyle = '#070b12';
+    rctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+    columns = Math.floor(window.innerWidth / fontSize);
+    drops = [];
+    for (var i = 0; i < columns; i++){
+      drops.push({
+        y: Math.random() * window.innerHeight / fontSize,
+        color: BLUES[Math.floor(Math.random() * BLUES.length)],
+        speed: 0.35 + Math.random() * 0.5              // slow — an old rain, in no hurry
+      });
+    }
+    if (reduced) drawFrozen();
+  }
+
+  function drawFrozen(){
+    rctx.font = fontSize + 'px monospace';
+    rctx.shadowColor = GREEN_SHADOW;
+    rctx.shadowBlur = 6;
+    for (var i = 0; i < columns; i++){
+      var x = i * fontSize;
+      var start = Math.random() * window.innerHeight;
+      var len = 10 + Math.floor(Math.random() * 30);
+      for (var j = 0; j < len; j++){
+        var y = start + j * fontSize;
+        if (y < 0 || y > window.innerHeight) continue;
+        var ch = chars.charAt(Math.floor(Math.random() * chars.length));
+        var fade = 1 - (j / len);
+        var col = (ch >= '0' && ch <= '9') ? WHITE : drops[i].color;
+        rctx.fillStyle = 'rgba(' + col + ',' + (0.2 + fade * 0.55) + ')';
+        rctx.fillText(ch, x, y);
+      }
+    }
+    rctx.shadowBlur = 0;
+  }
+
+  var last = 0;
+  function tick(t){
+    if (t - last > 66){                                 // ~15fps: calm, ancient
+      last = t;
+      rctx.fillStyle = 'rgba(7,11,18,0.05)';           // long slow fade — trails linger like incense
+      rctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      rctx.font = fontSize + 'px monospace';
+      rctx.shadowColor = GREEN_SHADOW;                 // green lingers beneath the blue
+      rctx.shadowBlur = 6;
+      for (var i = 0; i < columns; i++){
+        var d = drops[i];
+        var ch = chars.charAt(Math.floor(Math.random() * chars.length));
+        var x = i * fontSize;
+        var y = d.y * fontSize;
+        if (ch >= '0' && ch <= '9'){
+          rctx.fillStyle = 'rgba(' + WHITE + ',0.95)';  // the numbers, in white
+        } else {
+          rctx.fillStyle = 'rgba(' + d.color + ',0.85)';
+        }
+        rctx.fillText(ch, x, y);
+        d.y += d.speed;
+        if (y > window.innerHeight && Math.random() > 0.97){
+          d.y = 0;
+        }
+      }
+      rctx.shadowBlur = 0;
+    }
+    requestAnimationFrame(tick);
+  }
+
+  setup();
+  window.addEventListener('resize', setup);
+  if (!reduced) requestAnimationFrame(tick);
+})();
+</script>
+
+<script type="module">
+/* ══════════════════════════════════════════════════════════════
+   CONFIG — fill these in (see README.md)
+   ══════════════════════════════════════════════════════════════ */
+const REQUIRE_PASSWORD = false;                // flip to true when you want the gate
+const COUNCIL_PASSWORD = "137942";             // numeric string — change it
+const AGENT_ENDPOINT   = "/api/quigon";        // your Cloudflare Worker URL
+const AGENT_PROMPT_URL = "QUI_GON.md";         // the agent's soul, editable .md
+
+const firebaseConfig = {
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  appId: "YOUR_APP_ID"
+};
+/* ══════════════════════════════════════════════════════════════ */
+
+let fb = null;  // firebase modules, loaded lazily so the chamber renders even if the CDN stalls
+async function loadFirebase() {
+  const base = "https://www.gstatic.com/firebasejs/10.12.2/";
+  const [appM, authM, dbM] = await Promise.all([
+    import(base + "firebase-app.js"),
+    import(base + "firebase-auth.js"),
+    import(base + "firebase-database.js"),
+  ]);
+  fb = { ...appM, ...authM, ...dbM };
+}
+
+const gate = document.getElementById("gate");
+const room = document.getElementById("room");
+const wrong = document.getElementById("wrong");
+const scroll = document.getElementById("scroll");
+const nameEl = document.getElementById("name");
+const msgEl = document.getElementById("message");
+const sendBtn = document.getElementById("send");
+
+let db = null, previewMode = false;
+let systemPrompt = "You are Qui Gon, a wise and patient master.";
+const history = [];
+const HISTORY_LIMIT = 20;
+
+/* ---------- gate ---------- */
+if (!REQUIRE_PASSWORD || sessionStorage.getItem("council") === "open") {
+  enterCouncil();
+} else {
+  gate.style.display = "flex";
+}
+
+document.getElementById("gateForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const guess = document.getElementById("password").value.trim();
+  if (guess !== COUNCIL_PASSWORD) {
+    wrong.textContent = "The door does not move.";
+    return;
+  }
+  sessionStorage.setItem("council", "open");
+  await enterCouncil();
+});
+
+async function enterCouncil() {
+  gate.style.display = "none";
+  room.style.display = "flex";
+  nameEl.value = localStorage.getItem("councilName") || "";
+
+  try {
+    const r = await fetch(AGENT_PROMPT_URL);
+    if (r.ok) systemPrompt = await r.text();
+  } catch { /* fall back to default */ }
+
+  // preview mode: Firebase not configured yet — show the chamber with sample words
+  if (firebaseConfig.apiKey.startsWith("YOUR_")) {
+    previewMode = true;
+    renderMessage({ from: "human", name: "Anon", text: "Master, I have an idea but I keep waiting for the right time to start." });
+    renderMessage({ from: "quigon", text: "The right time is a story the fearful tell themselves, Anon. The Force does not wait, and neither does the field before battle. Name the smallest piece of your idea you could build before the candles burn down tonight — then build it." });
+    renderMessage({ from: "human", name: "Anon", text: "(preview mode — add your Firebase config and worker URL to bring the chamber to life)" });
+    return;
+  }
+
+  try {
+    await loadFirebase();
+  } catch (err) {
+    renderMessage({ from: "quigon", text: "The chamber cannot reach the archive (Firebase failed to load). Refresh, or check the connection." });
+    console.error(err);
+    return;
+  }
+
+  const app = fb.initializeApp(firebaseConfig);
+  await fb.signInAnonymously(fb.getAuth(app));
+  db = fb.getDatabase(app);
+
+  const messagesRef = fb.query(fb.ref(db, "council/messages"), fb.limitToLast(99));
+  fb.onChildAdded(messagesRef, (snap) => {
+    const m = snap.val();
+    if (!m || !m.text) return;
+    renderMessage(m);
+    history.push({ role: m.from === "quigon" ? "assistant" : "user",
+                   content: m.from === "quigon" ? m.text : `${m.name}: ${m.text}` });
+    if (history.length > HISTORY_LIMIT) history.shift();
+  });
+}
+
+/* ---------- render ---------- */
+function renderMessage(m) {
+  const div = document.createElement("div");
+  div.className = "msg" + (m.from === "quigon" ? " quigon" : "");
+  const who = document.createElement("div");
+  who.className = "who";
+  who.textContent = m.from === "quigon" ? "Qui Gon" : (m.name || "Anon");
+  const text = document.createElement("div");
+  text.className = "text";
+  text.textContent = m.text;
+  div.append(who, text);
+  scroll.appendChild(div);
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+function showPondering() {
+  const div = document.createElement("div");
+  div.className = "msg quigon pondering";
+  div.id = "pondering";
+  div.innerHTML = '<div class="who">Qui Gon</div><div class="text">pondering…</div>';
+  scroll.appendChild(div);
+  scroll.scrollTop = scroll.scrollHeight;
+}
+function clearPondering() { document.getElementById("pondering")?.remove(); }
+
+/* ---------- send ---------- */
+document.getElementById("composer").addEventListener("submit", sendMessage);
+msgEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(e); }
+});
+
+async function sendMessage(e) {
+  e.preventDefault();
+  const name = nameEl.value.trim() || "Anon";
+  const text = msgEl.value.trim();
+  if (!text) return;
+  if (previewMode) {
+    renderMessage({ from: "human", name, text });
+    renderMessage({ from: "quigon", text: "The chamber is not yet awake — connect Firebase and the worker, and I will hear you." });
+    msgEl.value = "";
+    return;
+  }
+  if (!db) return;
+  localStorage.setItem("councilName", name);
+  msgEl.value = "";
+  sendBtn.disabled = true;
+
+  try {
+    await fb.push(fb.ref(db, "council/messages"),
+      { from: "human", name, text, at: fb.serverTimestamp() });
+
+    showPondering();
+    const reply = await askQuiGon();
+    clearPondering();
+    if (reply) {
+      await fb.push(fb.ref(db, "council/messages"),
+        { from: "quigon", name: "Qui Gon", text: reply, at: fb.serverTimestamp() });
+    }
+    trimCouncil();   // fire and forget — keeps the archive at 99
+  } catch (err) {
+    clearPondering();
+    renderMessage({ from: "quigon", text: "The Council is silent. Check the connection and try again." });
+    console.error(err);
+  } finally {
+    sendBtn.disabled = false;
+    msgEl.focus();
+  }
+}
+
+/* ---------- the archive keeps only 99 ---------- */
+const MAX_MESSAGES = 99;
+async function trimCouncil() {
+  try {
+    const snap = await fb.get(fb.query(fb.ref(db, "council/messages"), fb.orderByKey()));
+    if (!snap.exists()) return;
+    const keys = Object.keys(snap.val()).sort();   // push keys sort chronologically
+    const excess = keys.length - MAX_MESSAGES;
+    if (excess <= 0) return;
+    const updates = {};
+    keys.slice(0, excess).forEach(k => { updates[k] = null; });   // oldest fall away
+    await fb.update(fb.ref(db, "council/messages"), updates);
+  } catch (err) {
+    console.error("trim failed", err);   // non-fatal; next send will try again
+  }
+}
+
+/* ---------- the agent ---------- */
+async function askQuiGon() {
+  const res = await fetch(AGENT_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ system: systemPrompt, messages: history })
+  });
+  if (!res.ok) throw new Error("Agent endpoint returned " + res.status);
+  const data = await res.json();
+  return data.reply || "";
+}
+</script>
+</body>
+</html>
