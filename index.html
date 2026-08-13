@@ -12,12 +12,12 @@
     --stone:#070b12;          /* deep midnight, the temple at night */
     --panel:#0d141f;
     --panel-edge:#1c2a3a;
-    --ember:#c9973f;          /* candle gold */
-    --ember-dim:#8a6a2e;
-    --parchment:#e8e4d5;
-    --ash:#7e8a91;
-    --saber:#5fd98a;          /* jedi green */
-    --saber-deep:#2a4d3a;
+    --holo:#4da6ff;           /* hologram blue, from the master himself */
+    --holo-dim:#2a6db3;
+    --parchment:#e8ecf2;
+    --ash:#8a97a3;
+    --saber:#45f27d;          /* bright jedi green — the send button's blade */
+    --saber-deep:#1d8a4a;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{height:100%}
@@ -35,7 +35,7 @@
     position:fixed;
     inset:0;
     z-index:0;
-    opacity:.55;
+    opacity:.65;
   }
   /* soft vignette so the rain recedes behind the chamber */
   body::after{
@@ -62,7 +62,7 @@
   }
   #gate .sigil{
     font-size:2rem;
-    color:var(--ember);
+    color:var(--ash);
     letter-spacing:.5em;
     text-indent:.5em;
     opacity:.85;
@@ -90,11 +90,11 @@
     outline:none;
     transition:border-color .4s;
   }
-  #gate input:focus{border-bottom-color:var(--ember)}
+  #gate input:focus{border-bottom-color:var(--holo)}
   #gate button{
     background:rgba(7,11,18,.6);
-    border:1px solid var(--ember-dim);
-    color:var(--ember);
+    border:1px solid var(--saber-deep);
+    color:var(--saber);
     font-family:'Cinzel',serif;
     font-size:.85rem;
     letter-spacing:.3em;
@@ -103,7 +103,7 @@
     cursor:pointer;
     transition:background .4s,color .4s;
   }
-  #gate button:hover,#gate button:focus-visible{background:var(--ember);color:var(--stone);outline:none}
+  #gate button:hover,#gate button:focus-visible{background:var(--saber);color:var(--stone);outline:none}
   #gate .wrong{color:#a0522d;font-style:italic;min-height:1.5em}
 
   /* ---------- room ---------- */
@@ -113,18 +113,18 @@
     align-items:center;
     width:min(660px,100%);
     min-height:100dvh;
-    padding:2.5rem 1rem 1rem;
+    padding:1.2rem 1rem 1rem;
   }
   .arch{
     position:relative;
-    width:min(320px,75vw);
-    aspect-ratio:3/4;
+    width:min(430px,92vw);
+    aspect-ratio:4/3.2;
   }
   .arch::before{
     content:"";
     position:absolute;
-    inset:-15%;
-    background:radial-gradient(ellipse 55% 55% at 50% 45%, rgba(95,217,138,.1), rgba(80,140,220,.06) 55%, transparent 75%);
+    inset:-12%;
+    background:radial-gradient(ellipse 55% 55% at 50% 45%, rgba(77,166,255,.14), rgba(47,127,229,.07) 55%, transparent 75%);
     animation:breathe 9s ease-in-out infinite;
   }
   @keyframes breathe{
@@ -137,30 +137,33 @@
     width:100%;height:100%;
     object-fit:cover;
     display:block;
-    filter:sepia(.12) contrast(1.02);
     -webkit-mask-image:radial-gradient(ellipse 68% 70% at 50% 45%, black 40%, transparent 97%);
     mask-image:radial-gradient(ellipse 68% 70% at 50% 45%, black 40%, transparent 97%);
   }
-  .nameplate{margin-top:1.4rem;text-align:center}
+  .nameplate{
+    position:absolute;
+    left:0;right:0;
+    bottom:4%;
+    text-align:center;
+    z-index:2;
+  }
   .nameplate h1{
     font-family:'Cinzel',serif;
     font-weight:700;
     font-size:1.5rem;
     letter-spacing:.35em;
     text-indent:.35em;
-    text-shadow:0 0 30px rgba(95,217,138,.25);
+    color:#fff;
+    text-shadow:0 0 24px rgba(77,166,255,.9), 0 2px 10px rgba(7,11,18,.9);
   }
   .nameplate span{
     display:block;
-    margin-top:.3rem;
-    font-size:.95rem;
+    margin-top:.15rem;
+    font-size:.9rem;
     font-style:italic;
     color:var(--ash);
     letter-spacing:.08em;
-  }
-  .rule{
-    width:120px;height:1px;margin:1.6rem auto;
-    background:linear-gradient(to right,transparent,var(--ember-dim),transparent);
+    text-shadow:0 2px 8px rgba(7,11,18,.95);
   }
 
   /* ---------- chat ---------- */
@@ -171,8 +174,9 @@
     padding:.7rem .7rem 1rem;
     scrollbar-width:thin;
     scrollbar-color:var(--panel-edge) transparent;
-    min-height:200px;
-    max-height:52dvh;
+    min-height:320px;
+    max-height:64dvh;
+    margin-top:.9rem;
     background:rgba(7,11,18,.55);
     border:1px solid rgba(28,42,58,.6);
     border-radius:4px;
@@ -188,10 +192,10 @@
     color:var(--ash);
     text-transform:uppercase;
   }
-  .msg.quigon .who{color:var(--saber)}
+  .msg.quigon .who{color:#fff}
   .msg .text{margin-top:.15rem;white-space:pre-wrap;overflow-wrap:break-word}
   .msg.quigon .text{
-    border-left:2px solid var(--saber-deep);
+    border-left:2px solid var(--holo-dim);
     padding-left:.9rem;
     font-size:1.06em;
   }
@@ -217,13 +221,13 @@
     outline:none;
     transition:border-color .3s;
   }
-  #composer input:focus,#composer textarea:focus{border-color:var(--saber-deep)}
+  #composer input:focus,#composer textarea:focus{border-color:var(--holo-dim)}
   #name{width:120px;flex-shrink:0}
   #message{flex:1;resize:none;height:48px;line-height:1.3}
   #send{
     background:rgba(13,20,31,.85);
-    border:1px solid var(--ember-dim);
-    color:var(--ember);
+    border:1px solid var(--saber-deep);
+    color:var(--saber);
     font-family:'Cinzel',serif;
     font-size:.75rem;
     letter-spacing:.2em;
@@ -232,9 +236,9 @@
     border-radius:3px;
     transition:background .3s,color .3s;
   }
-  #send:hover,#send:focus-visible{background:var(--ember);color:var(--stone);outline:none}
+  #send:hover,#send:focus-visible{background:var(--saber);color:var(--stone);outline:none}
   #send:disabled{opacity:.4;cursor:default}
-  #send:disabled:hover{background:rgba(13,20,31,.85);color:var(--ember)}
+  #send:disabled:hover{background:rgba(13,20,31,.85);color:var(--saber)}
 
   footer{
     font-size:.8rem;
@@ -267,12 +271,13 @@
 
 <!-- ══════════ THE ROOM ══════════ -->
 <section id="room">
-  <div class="arch"><img src="quigon.png" alt="Qui Gon, keeper of the Council"></div>
-  <div class="nameplate">
-    <h1>QUI GON</h1>
-    <span>Keeper of the Council</span>
+  <div class="arch">
+    <img src="quigon.png" alt="Qui Gon, keeper of the Council">
+    <div class="nameplate">
+      <h1>QUI GON</h1>
+      <span>Keeper of the Council</span>
+    </div>
   </div>
-  <div class="rule"></div>
 
   <div id="scroll" aria-live="polite"></div>
 
@@ -281,7 +286,7 @@
     <textarea id="message" placeholder="Speak to the Council…" maxlength="1000" aria-label="Message"></textarea>
     <button id="send" type="submit">SEND</button>
   </form>
-  <footer>all who have entered may witness these words</footer>
+  <footer>may the force be with you</footer>
 </section>
 
 <!-- ══════════ ANCIENT RAIN ══════════ -->
@@ -294,10 +299,10 @@
   var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*+-=[]{}|;:<>?/!～！￥（）【】';
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // lettering in bright jedi blues, white, and grey — green survives as a soft shadow glow
-  var BLUES = ['120,180,255', '90,150,235', '150,205,255', '170,180,195'];  // last one greyish
+  // hologram blues only — the rain falls in the master's own light; digits in white
+  var BLUES = ['77,166,255', '98,184,255', '47,127,229', '150,205,255'];
   var WHITE = '235,242,248';
-  var GREEN_SHADOW = 'rgba(95,217,138,0.55)';   // the jedi green, breathing behind the letters
+  var BLUE_GLOW = 'rgba(77,166,255,0.5)';   // soft hologram glow behind each letter
 
   var columns = 0, drops = [];
 
@@ -324,7 +329,7 @@
 
   function drawFrozen(){
     rctx.font = fontSize + 'px monospace';
-    rctx.shadowColor = GREEN_SHADOW;
+    rctx.shadowColor = BLUE_GLOW;
     rctx.shadowBlur = 6;
     for (var i = 0; i < columns; i++){
       var x = i * fontSize;
@@ -347,10 +352,10 @@
   function tick(t){
     if (t - last > 66){                                 // ~15fps: calm, ancient
       last = t;
-      rctx.fillStyle = 'rgba(7,11,18,0.05)';           // long slow fade — trails linger like incense
+      rctx.fillStyle = 'rgba(7,11,18,0.045)';           // long slow fade — trails linger like incense
       rctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
       rctx.font = fontSize + 'px monospace';
-      rctx.shadowColor = GREEN_SHADOW;                 // green lingers beneath the blue
+      rctx.shadowColor = BLUE_GLOW;                 // hologram glow beneath the letters
       rctx.shadowBlur = 6;
       for (var i = 0; i < columns; i++){
         var d = drops[i];
@@ -364,7 +369,7 @@
         }
         rctx.fillText(ch, x, y);
         d.y += d.speed;
-        if (y > window.innerHeight && Math.random() > 0.97){
+        if (y > window.innerHeight && Math.random() > 0.955){
           d.y = 0;
         }
       }
