@@ -6,7 +6,7 @@
 <title>The Council</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <style>
   :root{
     --stone:#070b12;          /* deep midnight, the temple at night */
@@ -158,12 +158,15 @@
   }
   .nameplate span{
     display:block;
-    margin-top:.15rem;
-    font-size:.9rem;
+    margin-top:.1rem;
+    font-family:'Cinzel',serif;
     font-style:italic;
-    color:var(--ash);
-    letter-spacing:.08em;
-    text-shadow:0 2px 8px rgba(7,11,18,.95);
+    font-weight:700;
+    font-size:1.08rem;
+    color:#fff;
+    letter-spacing:.5em;
+    text-indent:.5em;
+    text-shadow:0 0 18px rgba(77,166,255,.8), 0 2px 8px rgba(7,11,18,.9);
   }
 
   /* ---------- chat ---------- */
@@ -186,16 +189,27 @@
   @keyframes ink{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){.msg{animation:none}}
   .msg .who{
+    display:inline-block;
     font-family:'Cinzel',serif;
-    font-size:.72rem;
+    font-size:1.05rem;
+    font-weight:600;
     letter-spacing:.22em;
-    color:var(--ash);
+    color:#cfdae4;
     text-transform:uppercase;
+    border-bottom:1px solid rgba(207,218,228,.28);
+    padding-bottom:.12rem;
+    margin-bottom:.2rem;
   }
-  .msg.quigon .who{color:#fff}
-  .msg .text{margin-top:.15rem;white-space:pre-wrap;overflow-wrap:break-word}
+  .msg.quigon .who{color:var(--saber);text-shadow:0 0 14px rgba(69,242,125,.35);border-bottom:none}
+  .msg .text{
+    margin-top:.15rem;
+    white-space:pre-wrap;
+    overflow-wrap:break-word;
+    font-family:'IM Fell English',serif;
+    font-size:1.02em;
+  }
   .msg.quigon .text{
-    border-left:2px solid var(--holo-dim);
+    border-left:2px solid var(--saber);
     padding-left:.9rem;
     font-size:1.06em;
   }
@@ -274,8 +288,8 @@
   <div class="arch">
     <img src="quigon.png" alt="Qui Gon, keeper of the Council">
     <div class="nameplate">
-      <h1>QUI GON</h1>
-      <span>Keeper of the Council</span>
+      <h1>QUI-GON</h1>
+      <span>JINN</span>
     </div>
   </div>
 
@@ -286,7 +300,7 @@
     <textarea id="message" placeholder="Speak to the Council…" maxlength="1000" aria-label="Message"></textarea>
     <button id="send" type="submit">SEND</button>
   </form>
-  <footer>may the force be with you</footer>
+  <footer>May The Force Be With You</footer>
 </section>
 
 <!-- ══════════ ANCIENT RAIN ══════════ -->
@@ -390,16 +404,15 @@
    ══════════════════════════════════════════════════════════════ */
 const REQUIRE_PASSWORD = false;                // flip to true when you want the gate
 const COUNCIL_PASSWORD = "137942";             // numeric string — change it
-const AGENT_ENDPOINT   = "https://quigon.thill5523.workers.dev/";        // your Cloudflare Worker URL
+const AGENT_ENDPOINT   = "/api/quigon";        // your Cloudflare Worker URL
 const AGENT_PROMPT_URL = "QUI_GON.md";         // the agent's soul, editable .md
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA04TJr_Pd14wL-Jh41v65Iifr1v_4oY-k",
-  authDomain: "council-49a9b.firebaseapp.com",
-  projectId: "council-49a9b",
-  storageBucket: "council-49a9b.firebasestorage.app",
-  messagingSenderId: "755624084775",
-  appId: "1:755624084775:web:bb48b01a8d5454b70dd502",
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  appId: "YOUR_APP_ID"
 };
 /* ══════════════════════════════════════════════════════════════ */
 
@@ -493,10 +506,12 @@ function renderMessage(m) {
   div.className = "msg" + (m.from === "quigon" ? " quigon" : "");
   const who = document.createElement("div");
   who.className = "who";
-  who.textContent = m.from === "quigon" ? "Qui Gon" : (m.name || "Anon");
+  who.textContent = m.from === "quigon" ? "Qui-Gon" : (m.name || "Anon");
   const text = document.createElement("div");
   text.className = "text";
-  text.textContent = m.text;
+  text.textContent = (m.from === "quigon")
+    ? m.text.replace(/([.!?\u2026])\s+/g, "$1\n")   // one sentence per line, like verse
+    : m.text;
   div.append(who, text);
   scroll.appendChild(div);
   scroll.scrollTop = scroll.scrollHeight;
@@ -506,7 +521,7 @@ function showPondering() {
   const div = document.createElement("div");
   div.className = "msg quigon pondering";
   div.id = "pondering";
-  div.innerHTML = '<div class="who">Qui Gon</div><div class="text">pondering…</div>';
+  div.innerHTML = '<div class="who">Qui-Gon</div><div class="text">pondering…</div>';
   scroll.appendChild(div);
   scroll.scrollTop = scroll.scrollHeight;
 }
@@ -543,7 +558,7 @@ async function sendMessage(e) {
     clearPondering();
     if (reply) {
       await fb.push(fb.ref(db, "council/messages"),
-        { from: "quigon", name: "Qui Gon", text: reply, at: fb.serverTimestamp() });
+        { from: "quigon", name: "Qui-Gon", text: reply, at: fb.serverTimestamp() });
     }
     trimCouncil();   // fire and forget — keeps the archive at 99
   } catch (err) {
