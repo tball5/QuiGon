@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Council</title>
+<title>Qui-Gon</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
@@ -409,15 +409,16 @@
    ══════════════════════════════════════════════════════════════ */
 const REQUIRE_PASSWORD = false;                // flip to true when you want the gate
 const COUNCIL_PASSWORD = "137942";             // numeric string — change it
-const AGENT_ENDPOINT   = "/api/quigon";        // your Cloudflare Worker URL
+const AGENT_ENDPOINT   = "https://quigon.thill5523.workers.dev/";        // your Cloudflare Worker URL
 const AGENT_PROMPT_URL = "QUI_GON.md";         // the agent's soul, editable .md
 
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyA04TJr_Pd14wL-Jh41v65Iifr1v_4oY-k",
+  authDomain: "council-49a9b.firebaseapp.com",
+  projectId: "council-49a9b",
+  storageBucket: "council-49a9b.firebasestorage.app",
+  messagingSenderId: "755624084775",
+  appId: "1:755624084775:web:bb48b01a8d5454b70dd502",
 };
 /* ══════════════════════════════════════════════════════════════ */
 
